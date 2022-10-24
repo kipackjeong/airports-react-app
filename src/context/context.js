@@ -2,9 +2,7 @@ import { createContext } from "react";
 
 const defaultValue = {
   state: {
-    listDate: new Date(Date.now()),
-    inCompTodos: [],
-    compTodos: [],
+    airports: [],
   },
   dispatch: () => {},
 };

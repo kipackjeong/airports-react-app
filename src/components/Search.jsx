@@ -5,9 +5,11 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import InputBase from "@mui/material/InputBase";
+import { ButtonBase } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { functionCalled } from "../helpers/test";
 import PropTypes from "prop-types";
+import AppCtx from "../context/context";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -49,25 +51,55 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function PrimarySearchAppBar({ searchedAirport }) {
-  const [airportName, setAirportName] = React.useState("");
+const SelectedAirportsShowbox = styled(ButtonBase)(({ theme }) => ({
+  position: "relative",
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginRight: theme.spacing(2),
+  marginLeft: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    marginLeft: theme.spacing(3),
+    width: "auto",
+  },
+}));
 
-  const handleOnSearchChange = (e) => {
-    functionCalled(handleOnSearchChange);
+export default function PrimarySearchAppBar({ searchedAirport, setShowModal }) {
+  const [airportName, setAirportName] = React.useState("");
+  const { state, dispatch } = React.useContext(AppCtx);
+  const selectedAirports = state.selectedAirports;
+
+  //#region handlers
+  const handleSearchValueOnChange = (e) => {
+    functionCalled(handleSearchValueOnChange);
     let searchVal = e.target.value;
 
     setAirportName(searchVal);
   };
 
-  const handleKeyDown = (e) => {
+  const handleSearchBarKeyDown = (e) => {
+    functionCalled(handleSearchBarKeyDown);
+
     console.log("User pressed: ", e.key);
 
     if (e.key === "Enter") {
       e.preventDefault();
-
       //TODO: call apiToSearchAirport(airportName)
     }
   };
+
+  const handleSelectedAirportsShowBoxOnClick = (e) => {
+    functionCalled(handleSelectedAirportsShowBoxOnClick);
+
+    setShowModal((prev) => !prev);
+
+    //TODO: show map modal
+    console.log("Should show map modal.");
+  };
+  //#endregion
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -88,10 +120,17 @@ export default function PrimarySearchAppBar({ searchedAirport }) {
             <StyledInputBase
               placeholder="Search…"
               inputProps={{ "aria-label": "search" }}
-              onChange={handleOnSearchChange}
+              onChange={handleSearchValueOnChange}
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
+          {selectedAirports.length > 1 ? (
+            <SelectedAirportsShowbox
+              onClick={handleSelectedAirportsShowBoxOnClick}
+            >
+              {selectedAirports[0].name} to {selectedAirports[1].name}
+            </SelectedAirportsShowbox>
+          ) : null}
         </Toolbar>
       </AppBar>
     </Box>
@@ -99,4 +138,5 @@ export default function PrimarySearchAppBar({ searchedAirport }) {
 }
 PrimarySearchAppBar.propTypes = {
   searchedAirport: PropTypes.string,
+  setShowModal: PropTypes.func,
 };
