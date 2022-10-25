@@ -5,13 +5,13 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import InputBase from "@mui/material/InputBase";
-import { ButtonBase } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { TextField } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import { functionCalled } from "../helpers/test";
 import PropTypes from "prop-types";
 import AppCtx from "../context/context";
 
-const Search = styled("div")(({ theme }) => ({
+const SearchWrapper = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
@@ -27,23 +27,14 @@ const Search = styled("div")(({ theme }) => ({
   },
 }));
 
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
+const StyledInputBase = styled(Autocomplete)(({ theme }) => ({
   color: "inherit",
   "& .MuiInputBase-input": {
     padding: theme.spacing(1, 1, 1, 0),
     // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create("width"),
+    margin: "auto",
     width: "100%",
     [theme.breakpoints.up("md")]: {
       width: "40ch",
@@ -51,25 +42,19 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-const SelectedAirportsShowbox = styled(ButtonBase)(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-export default function PrimarySearchAppBar({ searchedAirport, setShowModal }) {
+const SearchBar = ({ setSearchedAirport }) => {
   const [airportName, setAirportName] = React.useState("");
+  const [searchVal, setSearchVal] = React.useState("");
   const { state, dispatch } = React.useContext(AppCtx);
+
+  //ANCHOR Test
+  console.log(state.airports);
+  const optionsList = state.airports.map((ap) => ({
+    id: ap.id,
+    label: ap.name,
+    iata: ap.iata || "",
+  }));
+
   const selectedAirports = state.selectedAirports;
 
   //#region handlers
@@ -87,56 +72,53 @@ export default function PrimarySearchAppBar({ searchedAirport, setShowModal }) {
 
     if (e.key === "Enter") {
       e.preventDefault();
-      //TODO: call apiToSearchAirport(airportName)
+      setSearchVal(e.target.value);
+      setSearchedAirport(e.target.value);
     }
   };
 
-  const handleSelectedAirportsShowBoxOnClick = (e) => {
-    functionCalled(handleSelectedAirportsShowBoxOnClick);
-
-    setShowModal((prev) => !prev);
-
-    //TODO: show map modal
-    console.log("Should show map modal.");
-  };
   //#endregion
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
-          >
-            Airport
-          </Typography>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ "aria-label": "search" }}
-              onChange={handleSearchValueOnChange}
-            />
-          </Search>
-          <Box sx={{ flexGrow: 1 }} />
-          {selectedAirports.length > 1 ? (
-            <SelectedAirportsShowbox
-              onClick={handleSelectedAirportsShowBoxOnClick}
-            >
-              {selectedAirports[0].name} to {selectedAirports[1].name}
-            </SelectedAirportsShowbox>
-          ) : null}
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ margin: "auto" }} position="relative">
+      <Toolbar sx={{ margin: "auto", width: "100%" }}>
+        <Typography
+          variant="h6"
+          noWrap
+          component="div"
+          sx={{ display: { xs: "none", sm: "block" } }}
+        >
+          Airport
+        </Typography>
+
+        <SearchWrapper>
+          <StyledInputBase
+            disablePortal
+            id="combo-box-demo"
+            options={optionsList}
+            sx={{ width: "60vw" }}
+            isOptionEqualToValue={(option, value) =>
+              option.label == value.name || option.iata == value.name
+            }
+            renderOption={(props, option) => {
+              return (
+                <li {...props} key={option.id}>
+                  {option.label} {option.iata || ""}
+                </li>
+              );
+            }}
+            renderInput={(params) => <TextField {...params} label="Airports" />}
+            onKeyDown={handleSearchBarKeyDown}
+          />
+        </SearchWrapper>
+        <Box sx={{ flexGrow: 1 }} />
+      </Toolbar>
     </Box>
   );
-}
-PrimarySearchAppBar.propTypes = {
-  searchedAirport: PropTypes.string,
-  setShowModal: PropTypes.func,
 };
+
+SearchBar.propTypes = {
+  setSearchedAirport: PropTypes.func,
+};
+
+export default SearchBar;

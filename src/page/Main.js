@@ -1,8 +1,8 @@
 import * as React from "react";
 import Board from "../components/Board";
-import AirportList from "../components/AirportList";
+import AirportList from "../components/AirportList/AirportList";
 import PrimarySearchAppBar from "../components/Search";
-import MapModal from "../components/MapModal";
+import MapModal from "../components/MapModal/MapModal";
 
 import { getAllAirports } from "../api/api";
 import AppContextProvider from "../context/context-provider";
@@ -21,30 +21,26 @@ export const Main = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       const airports = await getAllAirports();
-
-      //ANCHOR - TEST
-      console.log("Fetched aiports from api.");
-
       dispatch(createFetchAllAction(airports));
-
-      //ANCHOR - TEST
-      console.log("Context state after fetchall dispatch");
-      console.log(`state: ${state}`);
     };
 
     fetchData().catch(console.error);
   }, []);
 
-  console.log(state);
-
   return (
     <Board>
-      <PrimarySearchAppBar setShowModal={setShowModal} />
-      <AirportList
+      <PrimarySearchAppBar setSearchedAirport={setSearchedAirport} />
+      {/* <AirportList
         airports={state.airports}
         searchedAirport={searchedAirport}
-      />
-      <MapModal show={showModal} />
+        setShowModal={setShowModal}
+      /> */}
+
+      {state.selectedAirports.length < 2 ? (
+        ""
+      ) : (
+        <MapModal show={showModal} setShowModal={setShowModal} />
+      )}
     </Board>
   );
 };
