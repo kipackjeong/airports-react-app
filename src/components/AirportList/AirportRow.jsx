@@ -17,7 +17,7 @@ const AirportRow = ({ airport, setShowDialog }) => {
 
   const handleAirportRowOnClick = (airport) => {
     setSelected((prev) => !prev);
-    dispatch(createAirportSelectedAction(airport));
+    dispatch(createAirportSelectedAction(airport.id));
 
     if (selectedAirports.length == 1) {
       setShowDialog(true);

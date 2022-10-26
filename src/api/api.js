@@ -8,11 +8,8 @@ export async function getAllAirports() {
   let requestConfig = {
     baseURL: url,
     method: "get",
-
   };
   let airports = (await axios.request(requestConfig)).data;
-
   console.log(airports);
-
   return airports;
 }

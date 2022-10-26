@@ -11,10 +11,9 @@ const Board = ({ children }) => {
   return (
     <Paper
       style={{
-        height: "98vh",
-        display: flexbox,
+        height: "50vh",
+        display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
         boxShadow: "none",
       }}

@@ -1,13 +1,13 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import PropTypes from "prop-types";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import { CircularProgress } from "@mui/material";
-import { isLatLngLiteral } from "@googlemaps/typescript-guards";
-import { createCustomEqual } from "fast-equals";
+
 import AppCtx from "../../context/context";
+import config from "../../config.json";
+import useMap from "../../hooks/useMap";
 
 const style = {
   position: "relative",
@@ -33,18 +33,20 @@ const render = (status) => {
   }
 };
 
-const MapModal = ({ show, setShowModal }) => {
-  // states
-  const [clicks, setClicks] = React.useState([]);
-  const [zoom, setZoom] = React.useState(4); // initial zoom
-  const [center, setCenter] = React.useState({
-    lat: 39.8097343,
-    lng: -98.5556199,
-  });
-
+const MapModal = ({ showModal, setShowModal }) => {
   // ctx
   const { selectedAirports } = React.useContext(AppCtx).state;
+  const centerLat = (selectedAirports[0].lat + selectedAirports[1].lat) / 2;
+  const centerLng = (selectedAirports[0].lng + selectedAirports[1].lng) / 2;
+  // states
+  const [clicks, setClicks] = React.useState([]);
+  const [zoom, setZoom] = React.useState(5); // initial zoom
+  const [center, setCenter] = React.useState({
+    lat: centerLat,
+    lng: centerLng,
+  });
 
+  //#region behavior handlers
   const onClose = (e) => {
     setShowModal(false);
   };
@@ -58,37 +60,38 @@ const MapModal = ({ show, setShowModal }) => {
     setZoom(m.getZoom());
     setCenter(m.getCenter().toJSON());
   };
+  //#endregion
+
+  const markersLoc = selectedAirports.map((ap) => {
+    return { lat: ap.lat, lng: ap.lng };
+  });
+
+  console.log(markersLoc);
 
   return (
     <Modal
-      open={show}
+      open={showModal}
       onClose={onClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
     >
       <Box style={style}>
-        <Wrapper
-          apiKey={"AIzaSyD5KziAEbtPoQ33K1QcpgaS_5a9r3PyxEo"}
-          render={render}
-        >
-          {show ? (
-            <Map
-              center={center}
-              onClick={onClick}
-              onIdle={onIdle}
-              zoom={zoom}
-              style={{ flexGrow: "1", height: "100%" }}
-            >
-              {selectedAirports.length == 2
-                ? selectedAirports.map((ap) => (
-                    <Marker
-                      key={ap.id}
-                      position={{ lat: ap.lat, lng: ap.lon }}
-                    ></Marker>
-                  ))
-                : null}
-            </Map>
-          ) : null}
+        <Wrapper apiKey={config.api_key} render={render}>
+          <Map
+            markersLoc={markersLoc}
+            center={center}
+            onClick={onClick}
+            onIdle={onIdle}
+            zoom={zoom}
+            style={{ flexGrow: "1", height: "100%" }}
+          >
+            {selectedAirports.map((ap) => (
+              <Marker
+                key={ap.id}
+                position={{ lat: ap.lat, lng: ap.lng }}
+              ></Marker>
+            ))}
+          </Map>
         </Wrapper>
       </Box>
     </Modal>
@@ -96,66 +99,19 @@ const MapModal = ({ show, setShowModal }) => {
 };
 
 MapModal.propTypes = {
-  show: PropTypes.bool,
+  showModal: PropTypes.bool,
   setShowModal: PropTypes.func,
 };
 
-const Map = ({ onClick, onIdle, children, style, ...options }) => {
-  // [START maps_react_map_component_add_map_hooks]
-  const ref = React.useRef(null);
-  const [map, setMap] = React.useState();
-  const { state } = React.useContext(AppCtx);
-
-  // sets up the map, and polyline
-  React.useEffect(() => {
-    if (ref.current && !map) {
-      const map = new window.google.maps.Map(ref.current, {});
-
-      const { selectedAirports } = state;
-
-      const flightPlanCoordinates = [
-        { lat: selectedAirports[0].lat, lng: selectedAirports[0].lon },
-        { lat: selectedAirports[1].lat, lng: selectedAirports[1].lon },
-      ];
-
-      const flightPath = new window.google.maps.Polyline({
-        path: flightPlanCoordinates,
-        geodesic: true,
-        strokeColor: "#FF0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-      });
-
-      flightPath.setMap(map);
-      setMap(map);
-    }
-  }, [ref, map]);
-
-  // see discussion in https://github.com/googlemaps/js-samples/issues/946
-  useDeepCompareEffectForMaps(() => {
-    if (map) {
-      map.setOptions(options);
-    }
-  }, [map, options]);
-  // [END maps_react_map_component_options_hook]
-
-  // [START maps_react_map_component_event_hooks]
-  React.useEffect(() => {
-    if (map) {
-      ["click", "idle"].forEach((eventName) =>
-        window.google.maps.event.clearListeners(map, eventName)
-      );
-      if (onClick) {
-        map.addListener("click", onClick);
-      }
-
-      if (onIdle) {
-        map.addListener("idle", () => onIdle(map));
-      }
-    }
-  }, [map, onClick, onIdle]);
-  // [END maps_react_map_component_event_hooks]
-  // [START maps_react_map_component_return]
+const Map = ({ onClick, onIdle, children, style, markersLoc, ...options }) => {
+  const { ref, map } = useMap({
+    onClick,
+    onIdle,
+    children,
+    style,
+    markersLoc,
+    ...options,
+  });
 
   return (
     <>
@@ -176,6 +132,7 @@ Map.propTypes = {
   onIdle: PropTypes.any,
   style: PropTypes.any,
   children: PropTypes.node,
+  markersLoc: PropTypes.object,
 };
 
 const Marker = (options) => {
@@ -199,36 +156,8 @@ const Marker = (options) => {
       marker.setOptions(options);
     }
   }, [marker, options]);
+
   return null;
 };
-
-const deepCompareEqualsForMaps = createCustomEqual((deepEqual) => (a, b) => {
-  if (
-    isLatLngLiteral(a) ||
-    a instanceof window.google.maps.LatLng ||
-    isLatLngLiteral(b) ||
-    b instanceof window.google.maps.LatLng
-  ) {
-    return new window.google.maps.LatLng(a).equals(
-      new window.google.maps.LatLng(b)
-    );
-  }
-  // TODO extend to other types
-  // use fast-equals for other objects
-  return deepEqual(a, b);
-});
-
-function useDeepCompareMemoize(value) {
-  const ref = React.useRef();
-
-  if (!deepCompareEqualsForMaps(value, ref.current)) {
-    ref.current = value;
-  }
-  return ref.current;
-}
-
-function useDeepCompareEffectForMaps(callback, dependencies) {
-  React.useEffect(callback, dependencies.map(useDeepCompareMemoize));
-}
 
 export default React.memo(MapModal);

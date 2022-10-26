@@ -13,18 +13,29 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(pino);
 app.use(cors());
-app.get("/api", (req, res, next) => {
+app.get("/api", async (req, res, next) => {
   try {
     // in prod
-    // callRapidApiToGetUSAirports();
+    // const airports = callRapidApiToGetUSAirports();
+    // res.json(airports);
 
     // in development
-    getDataFromLocalJson();
+    const airports = getAirportsFromLocalJson();
   } catch (error) {
     next(error);
   }
 
-  function callRapidApiToGetUSAirports() {
+  async function callRapidApiToGetUSAirports() {
+    function scanAndRefineAirports(airports) {
+      return airports.filter(
+        (a) =>
+          a.type !== "heliport" &&
+          a.type !== "closed" &&
+          a.type !== "small_airport" &&
+          a.country.toLowerCase() == "us"
+      );
+    }
+
     const options = {
       method: "GET",
       url: "https://ourairport-data-search.p.rapidapi.com/api/airports/us",
@@ -34,43 +45,30 @@ app.get("/api", (req, res, next) => {
       },
     };
 
-    axios
-      .request(options)
-      .then(function (response) {
-        let airports = response.data.results.filter(
-          (a) =>
-            a.type !== "heliport" &&
-            a.type !== "closed" &&
-            a.type !== "small_airport"
-        );
+    const res = await axios.request(options);
+    let airports = scanAndRefineAirports(res.data.results);
 
-        let resStr = JSON.stringify(airports);
+    let resStr = JSON.stringify(airports);
 
-        fs.writeFile("./airports.json", resStr, (err) => {
-          if (err) {
-            console.log("Error writing file", err);
-          } else {
-            console.log("Successfully wrote file");
-          }
-          next(err);
-        });
-
-        res.json(airports);
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
+    await fs.writeFile("./airports.json", resStr, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log("Successfully wrote airports.json file.");
+      }
+    });
+    console.log(airports);
+    return airports;
   }
 
-  function getDataFromLocalJson() {
+  function getAirportsFromLocalJson() {
     fs.readFile("./airports.json", "utf8", (err, jsonString) => {
       if (err) {
-        console.log("Error reading file from disk:", err);
         return;
       }
       try {
-        const response = JSON.parse(jsonString);
-        res.json(response);
+        const airports = JSON.parse(jsonString);
+        res.json(airports);
       } catch (err) {
         console.log("Error parsing JSON string:", err);
       }

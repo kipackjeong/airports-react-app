@@ -11,12 +11,13 @@ import {
   airportAction,
   createFetchAllAction,
 } from "../context/airports-reducer";
+import SelectedShowBox from "../components/SelectedShowBox";
 
 export const Main = () => {
   const { state, dispatch } = React.useContext(AppCtx);
-
-  const [searchedAirport, setSearchedAirport] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
+
+  const { selectedAirports } = state;
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -29,17 +30,18 @@ export const Main = () => {
 
   return (
     <Board>
-      <PrimarySearchAppBar setSearchedAirport={setSearchedAirport} />
+      {selectedAirports.length > 0 && (
+        <SelectedShowBox setShowModal={setShowModal}></SelectedShowBox>
+      )}
+      <PrimarySearchAppBar />
       {/* <AirportList
         airports={state.airports}
         searchedAirport={searchedAirport}
         setShowModal={setShowModal}
       /> */}
 
-      {state.selectedAirports.length < 2 ? (
-        ""
-      ) : (
-        <MapModal show={showModal} setShowModal={setShowModal} />
+      {showModal && (
+        <MapModal showModal={showModal} setShowModal={setShowModal} />
       )}
     </Board>
   );

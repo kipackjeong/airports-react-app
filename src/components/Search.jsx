@@ -10,6 +10,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import { functionCalled } from "../helpers/test";
 import PropTypes from "prop-types";
 import AppCtx from "../context/context";
+import { createAirportSelectedAction } from "../context/airports-reducer";
 
 const SearchWrapper = styled("div")(({ theme }) => ({
   position: "relative",
@@ -42,73 +43,52 @@ const StyledInputBase = styled(Autocomplete)(({ theme }) => ({
   },
 }));
 
-const SearchBar = ({ setSearchedAirport }) => {
+const SearchBar = () => {
   const [airportName, setAirportName] = React.useState("");
   const [searchVal, setSearchVal] = React.useState("");
   const { state, dispatch } = React.useContext(AppCtx);
 
-  //ANCHOR Test
-  console.log(state.airports);
   const optionsList = state.airports.map((ap) => ({
     id: ap.id,
-    label: ap.name,
-    iata: ap.iata || "",
+    name: ap.name + (ap.iata ? ` (${ap.iata})` : ""),
+    region: ap.region,
+    lat: ap.lat,
+    lng: ap.lon,
   }));
 
-  const selectedAirports = state.selectedAirports;
-
   //#region handlers
-  const handleSearchValueOnChange = (e) => {
-    functionCalled(handleSearchValueOnChange);
-    let searchVal = e.target.value;
+  const handleOnChange = (e, targetValue) => {
+    const selectedAirport = targetValue;
 
-    setAirportName(searchVal);
-  };
-
-  const handleSearchBarKeyDown = (e) => {
-    functionCalled(handleSearchBarKeyDown);
-
-    console.log("User pressed: ", e.key);
-
-    if (e.key === "Enter") {
-      e.preventDefault();
-      setSearchVal(e.target.value);
-      setSearchedAirport(e.target.value);
+    if (selectedAirport) {
+      dispatch(createAirportSelectedAction(selectedAirport));
     }
   };
 
   //#endregion
 
   return (
-    <Box sx={{ margin: "auto" }} position="relative">
-      <Toolbar sx={{ margin: "auto", width: "100%" }}>
-        <Typography
-          variant="h6"
-          noWrap
-          component="div"
-          sx={{ display: { xs: "none", sm: "block" } }}
-        >
-          Airport
-        </Typography>
-
+    <Box>
+      <Toolbar sx={{ width: "100%" }}>
         <SearchWrapper>
           <StyledInputBase
             disablePortal
             id="combo-box-demo"
             options={optionsList}
             sx={{ width: "60vw" }}
+            getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) =>
-              option.label == value.name || option.iata == value.name
+              option.name == value.name && option.id == value.id
             }
+            onChange={handleOnChange}
             renderOption={(props, option) => {
               return (
                 <li {...props} key={option.id}>
-                  {option.label} {option.iata || ""}
+                  {option.name}
                 </li>
               );
             }}
             renderInput={(params) => <TextField {...params} label="Airports" />}
-            onKeyDown={handleSearchBarKeyDown}
           />
         </SearchWrapper>
         <Box sx={{ flexGrow: 1 }} />
@@ -117,8 +97,6 @@ const SearchBar = ({ setSearchedAirport }) => {
   );
 };
 
-SearchBar.propTypes = {
-  setSearchedAirport: PropTypes.func,
-};
+SearchBar.propTypes = {};
 
 export default SearchBar;
