@@ -6,7 +6,6 @@ import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import { CircularProgress } from "@mui/material";
 
 import AppCtx from "../../context/context";
-import config from "../../config.json";
 import useMap from "../../hooks/useMap";
 
 const style = {
@@ -76,7 +75,8 @@ const MapModal = ({ showModal, setShowModal }) => {
       aria-describedby="modal-modal-description"
     >
       <Box style={style}>
-        <Wrapper apiKey={config.api_key} render={render}>
+        {/* eslint-disable-next-line no-undef */}
+        <Wrapper apiKey={process.env.REACT_APP_GOOGLE_API_KEY} render={render}>
           <Map
             markersLoc={markersLoc}
             center={center}
