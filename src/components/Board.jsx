@@ -14,6 +14,7 @@ const Board = ({ children }) => {
         height: "50vh",
         display: "flex",
         flexDirection: "column",
+        justifyContent:"center",
         alignItems: "center",
         boxShadow: "none",
       }}

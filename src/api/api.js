@@ -3,7 +3,7 @@ import config from "../config.json";
 
 export async function getAllAirports() {
   let accessKey = config.access_key;
-  let url = "http://localhost:3001/api";
+  let url = "http://localhost:3001/airports";
 
   let requestConfig = {
     baseURL: url,

@@ -43,6 +43,8 @@ const SelectedShowBox = ({ setShowModal }) => {
   return (
     <Box
       sx={{
+        position:"absolute",
+        top:"25%",
         display: "flex",
         flexDirection: "row",
         justifyContent: "space-between",
