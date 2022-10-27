@@ -1,9 +1,7 @@
 import axios from "axios";
-import config from "../config.json";
-
 export async function getAllAirports() {
-  let accessKey = config.access_key;
-  let url = "http://localhost:3001/airports";
+  // eslint-disable-next-line no-undef
+  let url = process.env.REACT_APP_API_URL;
 
   let requestConfig = {
     baseURL: url,
